@@ -2,72 +2,177 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Mô phỏng chuyển động</title>
+  <title>Glowing Heart Animation</title>
   <style>
-    /* Canh giữa khung hình trên màn hình để dễ nhìn */
-    body {
+    /* Xóa bỏ khoảng lề mặc định của trình duyệt và ẩn thanh cuộn */
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Đặt nền tối hoàn toàn để hiệu ứng ánh sáng nổi bật */
+    body {
+      background-color: #05050a;
+      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #1a1a1a;
     }
-    /* Tạo viền cho vùng hiển thị canvas */
+
+    /* Đảm bảo khung canvas phủ toàn màn hình */
     canvas {
-      border: 2px solid #444;
-      background-color: #000;
+      display: block;
     }
   </style>
 </head>
 <body>
-  <!-- Khung vẽ có kích thước 600x300 pixel -->
-  <canvas id="screen" width="600" height="300"></canvas>
+  <!-- Khung vẽ đồ họa 2D -->
+  <canvas id="heartCanvas"></canvas>
 
   <script>
-    // 1. Lấy tham chiếu tới thẻ canvas và context dựng hình 2D
-    const canvas = document.getElementById("screen");
+    // 1. Khởi tạo đối tượng Canvas và bối cảnh vẽ 2D
+    const canvas = document.getElementById("heartCanvas");
     const ctx = canvas.getContext("2d");
 
-    // 2. Khai báo các thuộc tính của đối tượng chuyển động
-    let x = 50;         // Tọa độ ngang ban đầu
-    let y = 50;         // Tọa độ dọc ban đầu
-    let dx = 3;         // Vận tốc theo trục X (3 pixel/frame)
-    let dy = 2;         // Vận tốc theo trục Y (2 pixel/frame)
-    const radius = 16;  // Bán kính hình tròn
+    // 2. Thiết lập kích thước canvas tự động co giãn theo toàn bộ cửa sổ trình duyệt
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
 
-    // 3. Vòng lặp cập nhật và vẽ khung hình
-    function draw() {
-      // Xóa khung hình trước đó để không bị dính vệt
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Cập nhật lại kích thước nếu người dùng thu phóng cửa sổ trình duyệt
+    window.addEventListener("resize", () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
 
-      // Vẽ hình tròn ở vị trí mới
+    // 3. Công thức toán học đường cong hình trái tim (Parametric Heart Equation)
+    // t chạy từ 0 đến 2*PI, trả về tọa độ (x, y) chuẩn hóa
+    function getHeartPoint(t, scale) {
+      // Công thức trục X: x = 16 * sin^3(t)
+      const x = 16 * Math.pow(Math.sin(t), 3);
+
+      // Công thức trục Y: y = -(13*cos(t) - 5*cos(2t) - 2*cos(3t) - cos(4t))
+      // Đặt dấu trừ (-) phía trước vì trong hệ tọa độ máy tính, trục Y hướng xuống dưới (càng xuống càng tăng)
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+      return {
+        x: x * scale,
+        y: y * scale
+      };
+    }
+
+    // 4. Định nghĩa lớp Hạt ánh sáng (Particle) bay xung quanh trái tim
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      // Khởi tạo/tái tạo vị trí của một hạt bắt đầu từ tâm trái tim
+      reset() {
+        this.t = Math.random() * Math.PI * 2;         // Chọn một điểm ngẫu nhiên trên viền tim
+        const pos = getHeartPoint(this.t, 10);        // Lấy tọa độ tương ứng
+        this.x = width / 2 + pos.x;                   // Dời về gốc tọa độ giữa màn hình
+        this.y = height / 2 + pos.y;
+        this.vx = (Math.random() - 0.5) * 1.5;        // Vận tốc ngẫu nhiên theo trục X
+        this.vy = (Math.random() - 0.5) * 1.5;        // Vận tốc ngẫu nhiên theo trục Y
+        this.alpha = Math.random() * 0.8 + 0.2;       // Độ mờ đục ban đầu
+        this.size = Math.random() * 2 + 1;            // Bán kính hạt
+        this.decay = Math.random() * 0.015 + 0.005;   // Tốc độ mờ dần theo thời gian
+      }
+
+      // Cập nhật tọa độ và độ trong suốt của hạt qua từng khung hình
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decay;                     // Giảm dần độ mờ
+
+        // Nếu hạt đã mờ hết, tạo mới lại từ tâm để tiếp tục vòng tuần hoàn
+        if (this.alpha <= 0) {
+          this.reset();
+        }
+      }
+
+      // Vẽ hạt lên màn hình
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 75, 110, ${this.alpha})`;
+        ctx.shadowColor = "#ff2a5f";
+        ctx.shadowBlur = 8;                           // Tạo hiệu ứng phát sáng mờ ảo
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // 5. Khởi tạo mảng chứa 150 hạt ánh sáng
+    const particles = [];
+    for (let i = 0; i < 150; i++) {
+      particles.push(new Particle());
+    }
+
+    // 6. Biến đếm thời gian dùng cho hàm Sin để mô phỏng nhịp co bóp (heartbeat)
+    let step = 0;
+
+    // 7. Vòng lặp dựng hình chính (Render Loop)
+    function render() {
+      // BƯỚC 1: Xóa nền với hiệu ứng lưu vệt chuyển động mờ (Motion Blur)
+      // Dùng màu đen phủ với opacity 0.2 thay vì clearRect giúp tạo đuôi sáng kéo dài tự nhiên
+      ctx.fillStyle = "rgba(5, 5, 10, 0.25)";
+      ctx.fillRect(0, 0, width, height);
+
+      // BƯỚC 2: Tính toán hệ số phóng đại (scale) dựa theo nhịp đập sinh học
+      step += 0.05;
+      // Dùng hàm Math.sin(step) để giá trị dao động điều hòa tuần hoàn từ 9.5 đến 11.5
+      const beatScale = 10.5 + Math.sin(step) * 1.0;
+
+      // BƯỚC 3: Vẽ trái tim phát sáng ở trung tâm
+      ctx.save();
+      // Dời gốc tọa độ (0, 0) từ góc trên bên trái vào chính giữa màn hình
+      ctx.translate(width / 2, height / 2);
+
       ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = "#38ef7d";
-      ctx.fill();
+      // Lặp qua 100 điểm trên đường tròn (0 -> 2π) để nối thành hình trái tim khép kín
+      for (let t = 0; t <= Math.PI * 2; t += 0.05) {
+        const point = getHeartPoint(t, beatScale);
+        if (t === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      }
       ctx.closePath();
 
-      // Xử lý va chạm mép ngang (trái - phải)
-      if (x + dx > canvas.width - radius || x + dx < radius) {
-        dx = -dx; // Đảo ngược hướng di chuyển trục X
+      // Đổ bóng phát sáng viền trái tim
+      ctx.shadowColor = "#ff1744";
+      ctx.shadowBlur = 25;
+      ctx.strokeStyle = "#ff4081";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Đổ màu gradient bên trong lòng trái tim
+      const gradient = ctx.createRadialGradient(0, 0, 10, 0, 0, beatScale * 18);
+      gradient.addColorStop(0, "rgba(255, 23, 68, 0.85)");
+      gradient.addColorStop(0.7, "rgba(255, 64, 129, 0.35)");
+      gradient.addColorStop(1, "rgba(255, 64, 129, 0)");
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.restore();
+
+      // BƯỚC 4: Cập nhật và vẽ từng hạt bụi ánh sáng bay ra xung quanh
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
       }
 
-      // Xử lý va chạm mép dọc (trên - dưới)
-      if (y + dy > canvas.height - radius || y + dy < radius) {
-        dy = -dy; // Đảo ngược hướng di chuyển trục Y
-      }
-
-      // Cập nhật tọa độ cho frame tiếp theo
-      x += dx;
-      y += dy;
-
-      // Yêu cầu trình duyệt tiếp tục gọi hàm draw ở frame tiếp theo (chuẩn 60 FPS)
-      requestAnimationFrame(draw);
+      // BƯỚC 5: Gọi tiếp khung hình kế tiếp theo tần số quét của màn hình (60 FPS)
+      requestAnimationFrame(render);
     }
 
     // Khởi động vòng lặp
-    draw();
+    render();
   </script>
 </body>
 </html>
