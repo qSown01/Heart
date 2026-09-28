@@ -1,0 +1,21 @@
+/* Thiết lập lề và hộp hiển thị chuẩn */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Nền tối và căn giữa */
+body {
+  background-color: #05050a;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Đảm bảo canvas không bị dính khoảng trắng mặc định */
+canvas {
+  display: block;
+}
