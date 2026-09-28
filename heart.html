@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Mô phỏng chuyển động</title>
+  <style>
+    /* Canh giữa khung hình trên màn hình để dễ nhìn */
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #1a1a1a;
+    }
+    /* Tạo viền cho vùng hiển thị canvas */
+    canvas {
+      border: 2px solid #444;
+      background-color: #000;
+    }
+  </style>
+</head>
+<body>
+  <!-- Khung vẽ có kích thước 600x300 pixel -->
+  <canvas id="screen" width="600" height="300"></canvas>
+
+  <script>
+    // 1. Lấy tham chiếu tới thẻ canvas và context dựng hình 2D
+    const canvas = document.getElementById("screen");
+    const ctx = canvas.getContext("2d");
+
+    // 2. Khai báo các thuộc tính của đối tượng chuyển động
+    let x = 50;         // Tọa độ ngang ban đầu
+    let y = 50;         // Tọa độ dọc ban đầu
+    let dx = 3;         // Vận tốc theo trục X (3 pixel/frame)
+    let dy = 2;         // Vận tốc theo trục Y (2 pixel/frame)
+    const radius = 16;  // Bán kính hình tròn
+
+    // 3. Vòng lặp cập nhật và vẽ khung hình
+    function draw() {
+      // Xóa khung hình trước đó để không bị dính vệt
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Vẽ hình tròn ở vị trí mới
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#38ef7d";
+      ctx.fill();
+      ctx.closePath();
+
+      // Xử lý va chạm mép ngang (trái - phải)
+      if (x + dx > canvas.width - radius || x + dx < radius) {
+        dx = -dx; // Đảo ngược hướng di chuyển trục X
+      }
+
+      // Xử lý va chạm mép dọc (trên - dưới)
+      if (y + dy > canvas.height - radius || y + dy < radius) {
+        dy = -dy; // Đảo ngược hướng di chuyển trục Y
+      }
+
+      // Cập nhật tọa độ cho frame tiếp theo
+      x += dx;
+      y += dy;
+
+      // Yêu cầu trình duyệt tiếp tục gọi hàm draw ở frame tiếp theo (chuẩn 60 FPS)
+      requestAnimationFrame(draw);
+    }
+
+    // Khởi động vòng lặp
+    draw();
+  </script>
+</body>
+</html>
