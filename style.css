@@ -1,49 +1,20 @@
-/* Thiết lập lề và hộp hiển thị chuẩn */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* Nền tối và căn giữa */
-body {
-  background-color: #05050a;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-/* Đảm bảo canvas không bị dính khoảng trắng mặc định */
-canvas {
-  display: block;
-}
-
-/* Thêm giao diện nền, không gian game và hiệu ứng cho Flappy Bird */
-html, body {
-  margin: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(#70d6ff, #dff7ff);
+    box-sizing: border-box;
 }
 
 body {
-  display: grid;
-  place-items: center;
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
 }
 
-.game-wrap {
-  border: 6px solid #1e3a5f;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
-  background: #8ad8ff;
-}
-
-canvas {
-  display: block;
-  width: 420px;
-  height: 640px;
-  background: linear-gradient(#70d6ff 0%, #c9f0ff 60%, #dff7ff 100%);
+#game-container {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
 }

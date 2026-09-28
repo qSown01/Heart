@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flappy Bird</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="game-wrap">
-      <canvas id="gameCanvas" width="420" height="640"></canvas>
-    </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird - Phaser 3</title>
+    <!-- Nhúng file định kiểu giao diện -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Nhúng thư viện game engine Phaser 3 qua CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+</head>
+<body>
+    <!-- Vùng chứa game (container) -->
+    <div id="game-container"></div>
 
-    <script src="script.js"></script>
-  </body>
+    <!-- Nhúng mã nguồn điều khiển logic game -->
+    <script src="game.js"></script>
+</body>
 </html>
