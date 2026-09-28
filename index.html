@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>Glowing Heart Animation</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flappy Bird</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="game-wrap">
+      <canvas id="gameCanvas" width="420" height="640"></canvas>
+    </div>
 
-  <!-- 1. Dùng thẻ <link> để nhúng file CSS vào trang -->
-  <!-- 'rel="stylesheet"' báo cho trình duyệt biết đây là file định kiểu giao diện -->
-  <!-- 'href="style.css"' là đường dẫn tương đối tới file css nằm cùng thư mục -->
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <!-- Khung vẽ Canvas -->
-  <canvas id="heartCanvas"></canvas>
-
-  <!-- 2. Dùng thẻ <script> với thuộc tính 'src' để nạp file JavaScript -->
-  <!-- Đặt ở cuối thẻ <body> để đảm bảo giao diện (HTML) được tải xong xuôi trước khi code JS bắt đầu chạy -->
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>

@@ -1,100 +1,290 @@
 // Khởi tạo Canvas
-const canvas = document.getElementById("heartCanvas");
+const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-let width = (canvas.width = window.innerWidth);
-let height = (canvas.height = window.innerHeight);
+const GAME_WIDTH = (canvas.width = window.innerWidth);
+const GAME_HEIGHT = (canvas.height = window.innerHeight);
+const GRAVITY = 0.45;
+const FLAP_STRENGTH = -7.5;
+const PIPE_WIDTH = 70;
+const PIPE_GAP = 160;
+const PIPE_SPEED = 2.2;
+const PIPE_INTERVAL = 1500;
 
-window.addEventListener("resize", () => {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
+let bird;
+let pipes = [];
+let score = 0;
+let bestScore = 0;
+let gameStarted = false;
+let gameOver = false;
+let lastTime = 0;
+let lastPipeSpawn = 0;
+let animationId = null;
+
+function resetGame() {
+  bird = {
+    x: 110,
+    y: GAME_HEIGHT / 2 - 20,
+    radius: 18,
+    velocity: 0,
+    rotation: 0,
+  };
+
+  pipes = [];
+  score = 0;
+  gameStarted = false;
+  gameOver = false;
+  lastPipeSpawn = 0;
+}
+
+function createPipe() {
+  const minTopHeight = 60;
+  const maxTopHeight = GAME_HEIGHT - PIPE_GAP - 120;
+  const topHeight = Math.random() * (maxTopHeight - minTopHeight) + minTopHeight;
+
+  pipes.push({
+    x: GAME_WIDTH + 20,
+    width: PIPE_WIDTH,
+    topHeight,
+    passed: false,
+  });
+}
+
+function startGame() {
+  if (gameOver) {
+    resetGame();
+  }
+
+  gameStarted = true;
+  bird.velocity = FLAP_STRENGTH;
+}
+
+function handleInput() {
+  if (!gameStarted) {
+    startGame();
+  } else if (!gameOver) {
+    bird.velocity = FLAP_STRENGTH;
+  } else {
+    resetGame();
+    gameStarted = false;
+  }
+}
+
+window.addEventListener("keydown", (event) => {
+  if (event.code === "Space" || event.code === "ArrowUp") {
+    event.preventDefault();
+    handleInput();
+  }
 });
 
-// Hàm toán học vẽ hình trái tim
-function getHeartPoint(t, scale) {
-  const x = 16 * Math.pow(Math.sin(t), 3);
-  const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-  return { x: x * scale, y: y * scale };
+canvas.addEventListener("pointerdown", handleInput);
+
+function updateBird() {
+  bird.velocity += GRAVITY;
+  bird.y += bird.velocity;
+  bird.rotation = Math.min(Math.PI / 3, Math.max(-Math.PI / 3, bird.velocity / 10));
+
+  if (bird.y + bird.radius >= GAME_HEIGHT) {
+    bird.y = GAME_HEIGHT - bird.radius;
+    bird.velocity = 0;
+    if (!gameOver) endGame();
+  }
+
+  if (bird.y - bird.radius <= 0) {
+    bird.y = bird.radius;
+    bird.velocity = 0;
+    if (!gameOver) endGame();
+  }
 }
 
-// Lớp đối tượng hạt phát sáng
-class Particle {
-  constructor() {
-    this.reset();
+function updatePipes(delta) {
+  if (!gameStarted || gameOver) return;
+
+  if (performance.now() - lastPipeSpawn > PIPE_INTERVAL) {
+    createPipe();
+    lastPipeSpawn = performance.now();
   }
-  reset() {
-    this.t = Math.random() * Math.PI * 2;
-    const pos = getHeartPoint(this.t, 10);
-    this.x = width / 2 + pos.x;
-    this.y = height / 2 + pos.y;
-    this.vx = (Math.random() - 0.5) * 1.5;
-    this.vy = (Math.random() - 0.5) * 1.5;
-    this.alpha = Math.random() * 0.8 + 0.2;
-    this.size = Math.random() * 2 + 1;
-    this.decay = Math.random() * 0.015 + 0.005;
+
+  for (let i = pipes.length - 1; i >= 0; i--) {
+    const pipe = pipes[i];
+    pipe.x -= PIPE_SPEED * (delta / 16.67);
+
+    if (!pipe.passed && pipe.x + pipe.width < bird.x) {
+      pipe.passed = true;
+      score += 1;
+      bestScore = Math.max(bestScore, score);
+    }
+
+    const birdLeft = bird.x - bird.radius;
+    const birdRight = bird.x + bird.radius;
+    const birdTop = bird.y - bird.radius;
+    const birdBottom = bird.y + bird.radius;
+
+    const pipeLeft = pipe.x;
+    const pipeRight = pipe.x + pipe.width;
+    const pipeTopBottom = pipe.topHeight;
+    const pipeBottomY = pipe.topHeight + PIPE_GAP;
+
+    const hitPipeX = birdRight > pipeLeft && birdLeft < pipeRight;
+    const hitTop = birdTop < pipeTopBottom;
+    const hitBottom = birdBottom > pipeBottomY;
+
+    if (hitPipeX && (hitTop || hitBottom)) {
+      endGame();
+    }
+
+    if (pipe.x + pipe.width < -10) {
+      pipes.splice(i, 1);
+    }
   }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.alpha -= this.decay;
-    if (this.alpha <= 0) this.reset();
-  }
-  draw() {
-    ctx.save();
+}
+
+function endGame() {
+  gameOver = true;
+  gameStarted = false;
+}
+
+function drawBackground() {
+  ctx.fillStyle = "#8ad8ff";
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+  ctx.fillStyle = "#7bdc6b";
+  for (let i = 0; i < 12; i++) {
+    const x = (i * 60 + (performance.now() * 0.03) % 70) % (GAME_WIDTH + 60) - 30;
+    const y = 500 + (i % 3) * 16;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 75, 110, ${this.alpha})`;
-    ctx.shadowColor = "#ff2a5f";
-    ctx.shadowBlur = 8;
+    ctx.arc(x, y, 25, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
+  }
+
+  ctx.fillStyle = "#7ecb5f";
+  ctx.fillRect(0, GAME_HEIGHT - 50, GAME_WIDTH, 50);
+  ctx.fillStyle = "#72b853";
+  for (let i = 0; i < 20; i++) {
+    const x = (i * 25 + (performance.now() * 0.04) % 50) % (GAME_WIDTH + 40) - 20;
+    ctx.fillRect(x, GAME_HEIGHT - 50, 18, 20);
   }
 }
 
-const particles = [];
-for (let i = 0; i < 150; i++) {
-  particles.push(new Particle());
-}
-
-let step = 0;
-
-function render() {
-  ctx.fillStyle = "rgba(5, 5, 10, 0.25)";
-  ctx.fillRect(0, 0, width, height);
-
-  step += 0.05;
-  const beatScale = 10.5 + Math.sin(step) * 1.0;
-
+function drawBird() {
   ctx.save();
-  ctx.translate(width / 2, height / 2);
+  ctx.translate(bird.x, bird.y);
+  ctx.rotate(bird.rotation);
+
+  ctx.fillStyle = "#ffd93f";
   ctx.beginPath();
-  for (let t = 0; t <= Math.PI * 2; t += 0.05) {
-    const point = getHeartPoint(t, beatScale);
-    if (t === 0) ctx.moveTo(point.x, point.y);
-    else ctx.lineTo(point.x, point.y);
-  }
-  ctx.closePath();
-
-  ctx.shadowColor = "#ff1744";
-  ctx.shadowBlur = 25;
-  ctx.strokeStyle = "#ff4081";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  const gradient = ctx.createRadialGradient(0, 0, 10, 0, 0, beatScale * 18);
-  gradient.addColorStop(0, "rgba(255, 23, 68, 0.85)");
-  gradient.addColorStop(0.7, "rgba(255, 64, 129, 0.35)");
-  gradient.addColorStop(1, "rgba(255, 64, 129, 0)");
-  ctx.fillStyle = gradient;
+  ctx.ellipse(0, 0, 18, 14, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  ctx.fillStyle = "#ff9f1c";
+  ctx.beginPath();
+  ctx.moveTo(14, 0);
+  ctx.lineTo(26, 4);
+  ctx.lineTo(14, 10);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(7, -5, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#111111";
+  ctx.beginPath();
+  ctx.arc(8, -5, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#f36";
+  ctx.beginPath();
+  ctx.arc(-4, 4, 3, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.restore();
-
-  for (let i = 0; i < particles.length; i++) {
-    particles[i].update();
-    particles[i].draw();
-  }
-
-  requestAnimationFrame(render);
 }
 
-render();
+function drawPipe(pipe) {
+  const x = pipe.x;
+  const topHeight = pipe.topHeight;
+  const bottomY = topHeight + PIPE_GAP;
+
+  ctx.fillStyle = "#1ca754";
+  ctx.fillRect(x, 0, pipe.width, topHeight);
+  ctx.fillRect(x - 8, topHeight - 25, pipe.width + 16, 25);
+
+  ctx.fillRect(x, bottomY, pipe.width, GAME_HEIGHT - bottomY);
+  ctx.fillRect(x - 8, bottomY, pipe.width + 16, 25);
+
+  ctx.strokeStyle = "#0d7c3e";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(x + 2, 0, pipe.width - 4, topHeight);
+  ctx.strokeRect(x + 2, bottomY, pipe.width - 4, GAME_HEIGHT - bottomY);
+}
+
+function drawScore() {
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 42px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(String(score), GAME_WIDTH / 2, 80);
+}
+
+function drawStartPrompt() {
+  if (gameStarted || gameOver) return;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 46px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("Flappy Bird", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+
+  ctx.font = "24px Arial";
+  ctx.fillText("Nhấn Space / Click để chơi", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20);
+}
+
+function drawGameOver() {
+  if (!gameOver) return;
+
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.font = "bold 52px Arial";
+  ctx.fillText("Game Over", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+
+  ctx.font = "28px Arial";
+  ctx.fillText(`Điểm: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20);
+  ctx.fillText(`Best: ${bestScore}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60);
+  ctx.font = "22px Arial";
+  ctx.fillText("Nhấn nút / Space để chơi lại", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 110);
+}
+
+function draw() {
+  drawBackground();
+
+  for (const pipe of pipes) {
+    drawPipe(pipe);
+  }
+
+  drawBird();
+  drawScore();
+  drawStartPrompt();
+  drawGameOver();
+}
+
+function gameLoop(timestamp) {
+  const delta = timestamp - lastTime || 16;
+  lastTime = timestamp;
+
+  if (!gameOver && gameStarted) {
+    updateBird();
+    updatePipes(delta);
+  }
+
+  draw();
+  animationId = requestAnimationFrame(gameLoop);
+}
+
+resetGame();
+requestAnimationFrame(gameLoop);
