@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     watch: {
-      ignored: ['**/*.mp3', '**/public/audio/**', '**/dist/**'],
+      ignored: ['**/public/**', '**/dist/**', '**/*.~tmp', '**/*.tmp'],
     },
   },
 })

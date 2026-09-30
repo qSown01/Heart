@@ -557,6 +557,7 @@ function QuestionCard({ questionIdx, cardPos, level, isFlipped, answer, onFlip }
   const question = QUESTIONS_VN[level][questionIdx];
   const hasAnswer = answer && answer.trim().length > 0;
   const info = LEVEL_INFO[level];
+  const imageNumber = (level - 1) * 12 + questionIdx + 1;
 
   return (
     <motion.div
@@ -573,37 +574,41 @@ function QuestionCard({ questionIdx, cardPos, level, isFlipped, answer, onFlip }
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
       >
-        {/* ── BACK FACE ── */}
+        {/* ── BACK FACE (MẶT ÚP THEO BỘ 36 ẢNH) ── */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden"
+          className="absolute inset-0 rounded-2xl overflow-hidden shadow-md border border-white/60 bg-gradient-to-br from-amber-100 to-yellow-50"
           style={{
             backfaceVisibility: 'hidden',
-            background: 'linear-gradient(145deg, #fffbf0, #fef3c7)',
-            border: '1.5px solid rgba(251,191,36,0.3)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+            boxShadow: '0 4px 18px rgba(0,0,0,0.08)',
           }}
         >
-          {/* Subtle texture */}
-          <div className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage: 'repeating-linear-gradient(45deg, #78716c 0, #78716c 1px, transparent 0, transparent 50%)',
-              backgroundSize: '12px 12px',
+          {/* 1. Ảnh bìa mặt úp riêng biệt cho từng câu 1-36 */}
+          <img
+            src={`./cards/card-${imageNumber}.jpg`}
+            alt={`Card ${imageNumber}`}
+            className="w-full h-full object-cover select-none"
+            onError={(e) => {
+              if (!e.currentTarget.src.includes('card-back.jpg')) {
+                e.currentTarget.src = './card-back.jpg';
+              } else {
+                e.currentTarget.style.display = 'none';
+              }
             }}
           />
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
-            <div className="text-amber-300 text-sm font-light tracking-widest opacity-70">
-              {CARD_PATTERNS[cardPos % 12]}
-            </div>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(135deg, #fde68a, #fbbf24)',
-                boxShadow: '0 2px 8px rgba(251,191,36,0.4)',
-              }}>
-              <span className="text-white font-bold text-sm">{cardPos + 1}</span>
-            </div>
-            <div className="text-amber-400/60 text-[10px] font-medium tracking-[0.2em] uppercase">
-              câu hỏi
-            </div>
+
+          {/* 2. Lớp phủ gradient nhẹ giúp giữ độ tương phản sang trọng */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
+
+          {/* 3. Huy hiệu số thứ tự lá bài nhỏ xinh ở góc trên bên trái */}
+          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-white/85 backdrop-blur-md shadow-sm border border-white/60 flex items-center gap-1 pointer-events-none">
+            <span className="text-[11px] font-bold text-amber-600">#{cardPos + 1}</span>
+          </div>
+
+          {/* 4. Dòng chữ nhỏ tinh tế ở đáy lá bài */}
+          <div className="absolute bottom-2.5 inset-x-0 text-center pointer-events-none">
+            <span className="text-[10px] font-medium text-white/90 drop-shadow-sm tracking-wider uppercase">
+              Chạm để lật ✨
+            </span>
           </div>
         </div>
 
