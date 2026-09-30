@@ -15,6 +15,12 @@ import {
 import AnimatedBackground from "./AnimatedBackground";
 
 // ─────────────────────────────────────────────
+// TELEGRAM CONFIGURATION
+// ─────────────────────────────────────────────
+const TELEGRAM_BOT_TOKEN = '[8924461334:AAHzRrtj3FLGyv6e_IK5PkzKtetqwQyhPKw]';
+const TELEGRAM_CHAT_ID = '[8907434467]';
+
+// ─────────────────────────────────────────────
 // DATA: 36 questions by Arthur Aron (Vietnamese)
 // ─────────────────────────────────────────────
 const QUESTIONS_VN = {
@@ -66,6 +72,55 @@ const LEVEL_INFO = {
   1: { title: 'Khởi Đầu', subtitle: 'Làm quen & Khám phá', emoji: '🌱', color: 'from-emerald-400 to-teal-400', light: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
   2: { title: 'Gắn Kết', subtitle: 'Cảm xúc & Trải nghiệm', emoji: '🌼', color: 'from-amber-400 to-yellow-400', light: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
   3: { title: 'Thấu Hiểu Sâu', subtitle: 'Thân mật & Điểm yếu', emoji: '🌸', color: 'from-rose-400 to-pink-400', light: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700' },
+};
+
+// ─────────────────────────────────────────────
+// Telegram Notification Helper
+// ─────────────────────────────────────────────
+const sendTelegramAnswer = async ({ level, questionIdx, question, answer }) => {
+  try {
+    const token = TELEGRAM_BOT_TOKEN.replace(/[\[\]]/g, '').trim();
+    const chatId = TELEGRAM_CHAT_ID.replace(/[\[\]]/g, '').trim();
+    if (!token || !chatId) return;
+
+    const escapeHtml = (str) =>
+      String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const timeStr = new Date().toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    const levelTitle = LEVEL_INFO[level]?.title || `Mức ${level}`;
+    const questionNumber = (questionIdx ?? 0) + 1;
+
+    const text =
+      `🌻 <b>CÂU TRẢ LỜI MỚI TỪ HÀ!</b> 🌻\n\n` +
+      `📌 <b>Mức độ:</b> Mức ${level} — ${levelTitle}\n` +
+      `❓ <b>Câu hỏi ${questionNumber}/12:</b>\n<i>${escapeHtml(question)}</i>\n\n` +
+      `💬 <b>Câu trả lời:</b>\n<b>${escapeHtml(answer)}</b>\n\n` +
+      `⏰ <i>Thời gian: ${timeStr}</i>`;
+
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'HTML',
+      }),
+    });
+  } catch (err) {
+    console.error('Lỗi khi gửi thông báo Telegram:', err);
+  }
 };
 
 // ─────────────────────────────────────────────
@@ -207,19 +262,18 @@ function FloatingPetals() {
 }
 
 // ─────────────────────────────────────────────
-// Drill Love Playlist (10 Tracks)
+// Drill Love Playlist (9 Tracks)
 // ─────────────────────────────────────────────
 const DRILL_LOVE_PLAYLIST = [
-  { id: 1, title: 'Drill Love #1 - Nắng Ấm Hướng Dương', src: './audio/track1.mp3' },
-  { id: 2, title: 'Drill Love #2 - Giai Điệu Cho Em', src: './audio/track2.mp3' },
-  { id: 3, title: 'Drill Love #3 - Hoàng Hôn Tình Yêu', src: './audio/track3.mp3' },
-  { id: 4, title: 'Drill Love #4 - Đêm Trăng Huyền Ảo', src: './audio/track4.mp3' },
-  { id: 5, title: 'Drill Love #5 - Nhịp Đập Trái Tim', src: './audio/track5.mp3' },
-  { id: 6, title: 'Drill Love #6 - Chút Tình Đầu', src: './audio/track6.mp3' },
-  { id: 7, title: 'Drill Love #7 - Lạc Bước Giữa Đồi Hoa', src: './audio/track7.mp3' },
-  { id: 8, title: 'Drill Love #8 - Dịu Dàng Ánh Mắt', src: './audio/track8.mp3' },
-  { id: 9, title: 'Drill Love #9 - Hẹn Ước Dưới Sao', src: './audio/track9.mp3' },
-  { id: 10, title: 'Drill Love #10 - Bình Yên Bên Nhau', src: './audio/track10.mp3' },
+  { id: 1, title: '1. Ngày Mình Chia Tay', src: './audio/track1.mp3' },
+  { id: 2, title: '2. Sao Mình Chưa Nắm Tay Nhau', src: './audio/track2.mp3' },
+  { id: 3, title: '3. Hôm Qua Tôi Đã Khóc', src: './audio/track3.mp3' },
+  { id: 4, title: '4. Thành Đô', src: './audio/track4.mp3' },
+  { id: 5, title: '5. Vạn Vật Thay Đổi Vật Chất Lên Ngôi', src: './audio/track5.mp3' },
+  { id: 6, title: '6. Hãy Để Em Đi', src: './audio/track6.mp3' },
+  { id: 7, title: '7. Cánh Hoa Héo Tàn', src: './audio/track7.mp3' },
+  { id: 8, title: '8. Có Một Người Vẫn Đợi', src: './audio/track8.mp3' },
+  { id: 9, title: '9. Người Tốt Nhất Trên Đời', src: './audio/track9.mp3' },
 ];
 
 function MusicPlayer() {
@@ -315,13 +369,10 @@ function MusicPlayer() {
                 🌻
               </motion.div>
 
-              <div className="text-center space-y-1.5">
+              <div className="text-center">
                 <h2 className="text-2xl font-bold text-stone-800 leading-tight">
                   Hãy chơi 1 trò chơi nhỏ nhé:))))
                 </h2>
-                <p className="text-stone-500 text-xs leading-relaxed">
-                  Chạm để bắt đầu cùng playlist 10 bản nhạc Drill Love ấm áp 🎵
-                </p>
               </div>
 
               <motion.button
@@ -425,7 +476,7 @@ function MusicPlayer() {
               {currentTrack.title}
             </span>
             <span className="text-[9.5px] text-amber-600 font-medium">
-              Playlist Drill Love • {trackIndex + 1}/10
+              Playlist Drill Love • {trackIndex + 1}/{DRILL_LOVE_PLAYLIST.length}
             </span>
           </div>
         </motion.div>
@@ -766,6 +817,17 @@ export default function App() {
         [level]: { ...prev.answers[level], [openCard]: text },
       },
     }));
+
+    if (text && text.trim().length > 0 && openCard !== null) {
+      const question = QUESTIONS_VN[level]?.[openCard];
+      sendTelegramAnswer({
+        level,
+        questionIdx: openCard,
+        question,
+        answer: text.trim(),
+      });
+    }
+
     setOpenCard(null);
   };
 
